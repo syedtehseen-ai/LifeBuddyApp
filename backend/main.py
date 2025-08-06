@@ -3,8 +3,15 @@ from dotenv import load_dotenv
 from backend.database.connection import engine
 from backend.models.users import User
 from backend.database.base import Base
+# importing the auth file here
+from backend.routes import auth, user
+
 load_dotenv()
+
 backend = FastAPI(title="LifeBuddy backend", version="1.0.0")
+# including the router
+backend.include_router(auth.router, tags=["Auth"])
+backend.include_router(user.router, prefix="/users", tags=["User"])
 
 
 @backend.on_event("startup")
