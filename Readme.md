@@ -1,145 +1,139 @@
-# LifeBuddy App - Auth & User Management Module
+# LifeBuddyApp
 
-## ✅ Status: Completed
-
-This phase focused on building secure and scalable **User Authentication and Authorization** features for the LifeBuddy wellness app backend.
-
-Tip : Keep the .env file in the same directory as main.py and contents would be 
-
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lifebuddy_db
-SECRET_KEY=xxjdhgfhdg
-DEBUG=True
----
-
-To test this module - run the command **docker compose up -d** and in other email start the FASTAPI Server by running unicorn **uvicorn backend.main:backend --reload** and testing can be done in POSTMAN
-
-## 🔧 Features Implemented
-
-### 1. **User Registration API**
-
-* Endpoint: `POST /register`
-* Accepts: `username`, `email`, `password`
-* Validates:
-
-  * Unique email
-  * Unique username
-* Stores hashed password securely using **Passlib (bcrypt)**
-
-### 2. **User Login API with JWT**
-
-* Endpoint: `POST /login`
-* Uses **OAuth2PasswordRequestForm** for secure form handling
-* Returns:
-
-  ```json
-  {
-    "access_token": "<JWT token>",
-    "token_type": "bearer"
-  }
-  ```
-
-### 3. **JWT Token Handling**
-
-* Tokens include: `sub` (email), `exp` (expiration)
-* Created using: `jose.jwt`
-* Stored and verified securely using `SECRET_KEY`
-
-### 4. **Protected Routes with JWT**
-
-* Route: `GET /profile`
-* Uses dependency injection:
-
-  ```python
-  Depends(get_current_user)
-  ```
-* Only accessible with a valid token in headers:
-
-  ```
-  Authorization: Bearer <token>
-  ```
-
-### 5. **Password Hashing**
-
-* Passwords are never stored in plain text
-* Hashed using `Passlib.bcrypt`
-* Verified during login
+LifeBuddyApp is a habit tracking application built with **FastAPI**, **SQLAlchemy**, and **PostgreSQL** (or SQLite for local dev).
+It helps users create habits, track completion logs, and manage progress over time.
 
 ---
 
-## 🔍 Key Concepts Used
+## 🚀 Features
 
-| Concept             | Tech / Library              |
-| ------------------- | --------------------------- |
-| Web Framework       | FastAPI                     |
-| JWT Token Auth      | jose / OAuth2PasswordBearer |
-| Password Hashing    | Passlib (bcrypt)            |
-| DB ORM              | SQLAlchemy                  |
-| Pydantic Schemas    | FastAPI Models              |
-| Virtual Environment | `venv` (lbenv)              |
+1. **User Authentication**
 
----
+   * Secure JWT-based login.
+   * Token-based authentication using FastAPI security schemes.
 
-## 🧠 Challenges Faced & How I Solved Them
+2. **Habit Management**
 
-### 🐛 **1. Route Not Found - 404 Errors**
+   * Create habits with:
 
-* **Issue:** `/profile` route returned 404
-* **Fix:** Forgot to include router in `main.py`. Solved by adding:
+     * Goal name
+     * Frequency (daily, weekly, etc.)
+     * Start date
+   * Update, delete, and view habits.
+   * Habits are associated with the authenticated user.
 
-  ```python
-  from backend.routes import user
-  backend.include_router(user.router)
-  ```
+3. **Habit Logging**
 
-### 🐛 **2. JWT Error: `AttributeError: module 'models' has no attribute 'User'`**
+   * Log habit completions.
+   * Store `status` and `log_date` (or `completed_at`).
+   * View logs for a specific habit or all habits.
 
-* **Issue:** Tried accessing `models.User` without importing it correctly
-* **Fix:** Imported explicitly from the correct file:
+4. **Validations**
 
-  ```python
-  from backend.models.users import User
-  ```
+   * Prevent duplicate habits for the same user & goal.
+   * Validate log dates and status values.
 
-### 🐛 **3. Invalid Credentials Despite Correct Details**
+5. **Testing**
 
-* **Issue:** Login kept failing
-* **Fix:** Ensured hashed passwords are verified properly:
-
-  ```python
-  Hash.verify(input_password, user.hashed_password)
-  ```
-
-### 🐛 **4. Postman Login Fail (422 Error)**
-
-* **Issue:** Sent login data as JSON instead of form-data
-* **Fix:** Changed Postman body to `x-www-form-urlencoded` as expected by OAuth2
-
-### 🐛 **5. AttributeError for `ShowUser`**
-
-* **Fix:** Defined proper `ShowUser` schema and imported it in router
-
-### 🐛 **6. Uvicorn not found / pip install issues**
-
-* **Fix:** Activated correct virtual environment and ran:
-
-  ```bash
-  ./lbenv/bin/pip install uvicorn
-  ```
+   * CRUD tests for `Habit` and `HabitLog` endpoints.
 
 ---
 
-## 🚀 Result
+## 🛠 Tech Stack
 
-* Successfully built and tested full authentication system
-* Postman used to test `/register`, `/login`, `/profile`
-* Tokens working perfectly with protected routes
+* **Backend**: FastAPI
+* **Database**: PostgreSQL / SQLite (dev)
+* **ORM**: SQLAlchemy
+* **Auth**: OAuth2PasswordBearer → migrated to HTTPBearer
+* **JWT Handling**: python-jose
+* **Validation**: Pydantic
 
 ---
 
-## 🛠️ Next Steps
+## 📂 API Endpoints Overview
 
-* Add Google OAuth login
-* Add `/logout` and token revocation support
-* Add user roles (admin, user)
-* Enable password reset & email verification
+### Habits
+
+* `GET /habits/` → List all user habits
+* `POST /habits/` → Create a habit
+* `PUT /habits/{id}` → Update a habit
+* `DELETE /habits/{id}` → Delete a habit
+
+### Habit Logs
+
+* `GET /habit-logs/` → List all habit logs
+* `GET /habit-logs/habit/{habit_id}` → Get logs for a specific habit
+* `POST /habit-logs/` → Create a habit log
+* `PUT /habit-logs/{log_id}` → Update a habit log
+* `DELETE /habit-logs/{log_id}` → Delete a habit log
+
+---
+
+## 🧠 Development Journey
+
+This project was built step-by-step:
+
+1. **Designed the Habit model** with goal name, frequency, start date.
+2. **Added Habit CRUD routes** and tested them in Swagger & Postman.
+3. Linked habits to users with a foreign key.
+4. Created Habit Log model to store completion data (`completed_at`, `status`).
+5. Faced several **Pydantic schema attribute errors** (e.g., `AttributeError: 'HabitLogCreate' object has no attribute 'status'`).
+
+   * **Solution**: Added the missing fields in the corresponding Pydantic schema and ensured models and schemas matched.
+6. Fixed Swagger **duplicate endpoints issue**.
+
+   * **Cause**: Mismatched tags in `main.py` and router definition.
+   * **Solution**: Unified tags and removed duplication in `include_router`.
+7. Migrated from **OAuth2PasswordBearer** to **HTTPBearer** for simpler token handling in Swagger UI.
+8. Learned how to **debug SQLAlchemy relationship errors** like `AttributeError: module 'habit_log' has no attribute 'Habit'` by importing the correct models.
+
+---
+
+## ⚡ Challenges & How I Overcame Them
+
+### 1. Duplicate Swagger Endpoints
+
+**Problem**: Two sets of identical endpoints appeared in Swagger.
+**Cause**: Router tags mismatched between `main.py` and `routes` files.
+**Solution**: Unified tag names and removed extra `tags=[]` in `main.py`.
+
+### 2. Missing Attributes in Schemas
+
+**Problem**: Pydantic models did not match SQLAlchemy models, causing attribute errors.
+**Solution**: Synced all schemas with models and tested after every change.
+
+### 3. Relationship Join Errors
+
+**Problem**: Tried joining on a model not imported correctly.
+**Solution**: Imported `Habit` from `backend.models.habits` and defined proper relationships.
+
+### 4. Authentication Migration
+
+**Problem**: Swagger login flow was confusing with `OAuth2PasswordBearer`.
+**Solution**: Switched to `HTTPBearer` for simpler token-based access in Swagger and Postman.
+
+---
+
+## ⚙️ Installation & Setup
+
+```bash
+# 1️⃣ Clone the repo
+git clone https://github.com/yourusername/LifeBuddyApp.git
+cd LifeBuddyApp
+
+# 2️⃣ Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # Mac/Linux
+venv\Scripts\activate     # Windows
+
+# 3️⃣ Install dependencies
+pip install -r requirements.txt
+
+# 4️⃣ Run the app
+uvicorn backend.main:app --reload
+```
+
+Access the docs at:
+➡️ **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+➡️ **ReDoc**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
