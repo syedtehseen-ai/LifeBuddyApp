@@ -68,7 +68,7 @@ def update_habit(
     db: Session = Depends(get_db),
     current_user: dict = Depends(oauth2.get_current_user),
 ):
-    habit = db.query(models.Habit).filter(models.Habit.id == habit_id, models.Habit.user_id == current_user["id"]).first()
+    habit = db.query(models.Habit).filter(models.Habit.id == habit_id, models.Habit.user_id == current_user.id).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Habit not found")
 

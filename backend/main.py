@@ -13,7 +13,7 @@ backend = FastAPI(title="LifeBuddy backend", version="1.0.0")
 backend.include_router(auth.router, tags=["Auth"])
 backend.include_router(user.router, prefix="/users", tags=["User"])
 backend.include_router(habit.router, tags=["Habits"])
-backend.include_router(habit_log.router, tags=["Habit_Logs"])
+backend.include_router(habit_log.router)
 
 
 @backend.on_event("startup")
